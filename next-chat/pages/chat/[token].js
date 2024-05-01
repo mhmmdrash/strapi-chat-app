@@ -16,6 +16,7 @@ export default function Chat() {
     if (!router.isReady) return console.log("Loading... Please wait"); // Checking if the token has been fetched from the URL.
     try {
       const payload = jwt.verify(token, SECRET); // Verifying the token using the secret
+      console.log("payload", payload)
       async function fetchData() {
         await fetch(`http://localhost:1337/api/accounts/${payload.id}`)
           .then(async (e) => {

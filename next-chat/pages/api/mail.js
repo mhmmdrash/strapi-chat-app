@@ -1,13 +1,18 @@
 export default function (req, res) {
   const nodemailer = require("nodemailer");
 
+  // Validate req.body
+  if (!req.body || !req.body.email || !req.body.message) {
+    return res.status(400).json({ message: "Invalid request body" });
+  }
+
   const transporter = nodemailer.createTransport({
     port: 465,
     host: "smtp.gmail.com",
-    secure: "true",
+    secure: true,
     auth: {
-      user: "example@gmail.com",
-      pass: "password",
+      user: "mohammadrasheed56@gmail.com",
+      pass: "a$$dropped333@",
     },
   });
 

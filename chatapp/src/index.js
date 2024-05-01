@@ -1,6 +1,7 @@
 "use strict";
 
 const { default: axios } = require("axios");
+// import { Server } from 'socket.io';
 
 module.exports = {
   /**
@@ -20,7 +21,9 @@ module.exports = {
    */
 
   bootstrap(/* { strapi } */) {
-    var io = require("socket.io")(strapi.server.httpServer, {
+    // const io = new Server(strapi.server.httpServer);
+    const { Server } = require('socket.io')
+    var io = new Server(strapi.server.httpServer, {
       cors: {
         origin: "http://localhost:3000",
         methods: ["GET", "POST"],
@@ -36,46 +39,61 @@ module.exports = {
           socket.join("group");
           socket.emit("welcome", {
             user: "bot",
-            text: `${username}, Welcome to the group chat`,
+            text: `${username}, Welcome to the chat`,
             userData: username,
           });
-          let strapiData = {
-            data: {
-              users: username,
-              socketid: socket.id,
-            },
-          };
-          await axios
-            .post("http://localhost:1337/api/active-users", strapiData)
-            .then(async (e) => {
-              socket.emit("roomData", { done: "true" });
-            })
-            .catch((e) => {
-              if (e.message == "Request failed with status code 400") {
-                socket.emit("roomData", { done: "existing" });
-              }
-            });
+          // let strapiData = {
+          //   data: {
+          //     users: username,
+          //     socketid: socket.id,
+          //   },
+          // };
+          // await axios
+          //   .post("http://localhost:1337/api/active-users", strapiData)
+          //   .then(async (e) => {
+          //     socket.emit("roomData", { done: "true" });
+          //   })
+          //   .catch((e) => {
+          //     if (e.message == "Request failed with status code 400") {
+          //       socket.emit("roomData", { done: "existing" });
+          //     }
+          //   });
         } else {
           console.log("e no work");
         }
       });
-      socket.on("sendMessage", async (data) => {
+      socket.on("sendMessage", async(data) => {
         let strapiData = {
           data: {
             user: data.user,
             message: data.message,
           },
         };
+        console.log('user message', strapiData.data)
+
         var axios = require("axios");
         await axios
-          .post("http://localhost:1337/api/messages", strapiData)
-          .then((e) => {
-            socket.broadcast.to("group").emit("message", {
-              user: data.username,
-              text: data.message,
-            });
-          })
-          .catch((e) => console.log("error", e.message));
+        .post("http://localhost:1337/api/messages", strapiData)
+        .then((e) => {
+          console.log('user message stored ', data.message)
+          socket.broadcast.to("group").emit("message", strapiData.data);
+        })
+        .catch((e) => console.log("error", e.message));
+        
+        let botData = {
+          data: {
+            user: 'bot',
+            message: data.message,
+          },
+        };
+
+        await axios
+        .post("http://localhost:1337/api/messages", botData)
+        .then((e) => {
+          console.log('Broadcasting bot message')
+          socket.broadcast.to('group').emit("message", botData.data);
+        })
+        .catch((e) => console.log("error", e.message));
       });
       socket.on("kick", (data) => {
         io.sockets.sockets.forEach((socket) => {
